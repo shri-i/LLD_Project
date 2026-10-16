@@ -256,3 +256,29 @@ test('cancelling a confirmed booking the engine does not track (after a restart)
   const after = await request(app).get(`/api/shows/${showId}/seats`);
   assert.equal(after.body[0].status, 'AVAILABLE');
 });
+
+test('a seat from a cancelled booking can be booked again', async () => {
+  const first = await register('First Buyer');
+  const second = await register('Second Buyer');
+  const { showId, seatIds } = seedShow(1);
+  const bookSeat = async (auth) => {
+    const header = { Authorization: `Bearer ${auth.token}` };
+    const lock = await request(app).post(`/api/shows/${showId}/lock`).set(header).send({ seatIds });
+    assert.equal(lock.status, 200, JSON.stringify(lock.body));
+    const created = await request(app).post('/api/bookings').set(header).send({ showId, seatIds });
+    assert.equal(created.status, 201, JSON.stringify(created.body));
+    const paid = await request(app).post(`/api/bookings/${created.body.bookingId}/pay`).set(header).send({ mode: 'UPI' });
+    assert.equal(paid.status, 200, JSON.stringify(paid.body));
+    return created.body.bookingId;
+  };
+
+  const firstBooking = await bookSeat(first);
+  const cancelled = await request(app).post(`/api/bookings/${firstBooking}/cancel`)
+    .set('Authorization', `Bearer ${first.token}`);
+  assert.equal(cancelled.status, 200, JSON.stringify(cancelled.body));
+  assert.equal(database.booking_seats.some((row) => row.booking_id === firstBooking), false);
+
+  // Previously failed with 409 "already booked": the cancelled row kept the UNIQUE slot.
+  const secondBooking = await bookSeat(second);
+  assert.ok(database.booking_seats.some((row) => row.booking_id === secondBooking));
+});

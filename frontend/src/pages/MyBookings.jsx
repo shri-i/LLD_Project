@@ -7,7 +7,9 @@ const money = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'I
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 function seatsFor(booking) {
-  return (booking.booking_seats || []).map((item) => item.seat_id).join(', ') || 'Seat details unavailable';
+  const seats = (booking.booking_seats || []).map((item) => item.seat_id).join(', ');
+  if (seats) return seats;
+  return booking.status === 'CANCELLED' ? 'Released (booking cancelled)' : 'Seat details unavailable';
 }
 
 export default function MyBookings() {

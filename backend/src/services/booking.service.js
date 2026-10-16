@@ -165,6 +165,12 @@ async function cancel(bookingId, userId) {
   if (!quote.ok) engineConflict(quote, 'Booking cannot be cancelled');
   const refundAmount = Number(quote.refundAmount);
 
+  const seatsResult = await supabase.from('booking_seats')
+    .select('seat_id')
+    .eq('booking_id', bookingId);
+  ensureQuerySucceeded(seatsResult.error, 'findBookingSeats');
+  const seatIds = seatsResult.data.map((row) => row.seat_id);
+
   const updateResult = await supabase.from('bookings')
     .update({ status: 'CANCELLED' })
     .eq('id', bookingId)
@@ -186,21 +192,22 @@ async function cancel(bookingId, userId) {
     ensureQuerySucceeded(refundResult.error, 'refundPayment');
   }
 
+  // Release the seats in the database. UNIQUE (show_id, seat_id) covers every
+  // booking_seats row, so a cancelled booking must give its rows up or nobody
+  // could ever book those seats again. The booking and its payments remain.
+  const releaseResult = await supabase.from('booking_seats')
+    .delete()
+    .eq('booking_id', bookingId);
+  ensureQuerySucceeded(releaseResult.error, 'releaseBookingSeats');
+
   // Free the seats in the engine so they can be booked again right away.
   if (pending) {
     const result = engine.cancel(pending.engineBookingId);
     if (!result.ok) engine.releaseBookedSeats(pending.showId, pending.seatIds);
     pending.status = 'CANCELLED';
-  } else {
-    const seatsResult = await supabase.from('booking_seats')
-      .select('seat_id')
-      .eq('booking_id', bookingId);
-    ensureQuerySucceeded(seatsResult.error, 'findBookingSeats');
-    const seatIds = seatsResult.data.map((row) => row.seat_id);
-    if (seatIds.length > 0) {
-      const result = engine.releaseBookedSeats(booking.show_id, seatIds);
-      if (!result.ok) console.error('Engine seat release failed:', result.reason);
-    }
+  } else if (seatIds.length > 0) {
+    const result = engine.releaseBookedSeats(booking.show_id, seatIds);
+    if (!result.ok) console.error('Engine seat release failed:', result.reason);
   }
   return { bookingId, status: 'CANCELLED', refundAmount };
 }
