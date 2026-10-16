@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: 4000
+      FRONTEND_ORIGIN: http://localhost:5173
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Same-origin path; nginx proxies /api to the backend container.
+        VITE_API_URL: /api
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend

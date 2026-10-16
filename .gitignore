@@ -1,0 +1,23 @@
+build/
+build-*/
+dist/
+node_modules/
+.env
+*.o
+*.exe
+
+# IDE folders and workspace files
+.idea/
+.vscode/
+.vs/
+*.code-workspace
+
+
+# Claude Code files
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+
+# OS and log clutter
+.DS_Store
+*.log

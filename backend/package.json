@@ -1,0 +1,29 @@
+{
+  "name": "bookmyshow-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BookMyShow Node.js backend and C++ engine binding",
+  "scripts": {
+    "build:core": "cmake-js compile --directory ../core --out ../core/build-node",
+    "smoke:core": "node scripts/engine-smoke-test.js",
+    "demo:concurrency": "node scripts/concurrency-demo.js",
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.76.1",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "node-addon-api": "^8.5.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "cmake-js": "^7.3.0",
+    "supertest": "^7.1.4"
+  },
+  "binary": {
+    "napi_versions": [8]
+  }
+}

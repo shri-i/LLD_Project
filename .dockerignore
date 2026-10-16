@@ -1,0 +1,10 @@
+# Context for the backend image (repository root).
+.git
+.vscode
+**/node_modules
+**/.env
+core/build
+core/build-*
+frontend
+docs
+db
