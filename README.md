@@ -1,4 +1,4 @@
-# BookMyShow
+# SHOWTIME
 
 BookMyShow is a movie ticket booking app with a React/Vite client, an Express API, a C++17 booking engine exposed through Node-API, and Supabase/Postgres persistence. Users browse shows, hold seats for a limited time, pay through a mocked payment strategy, and manage confirmed bookings.
 
